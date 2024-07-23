@@ -11,6 +11,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -26,6 +27,8 @@ import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -46,6 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 @Configuration
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 @EnableWebSecurity
+@EnableMethodSecurity
 public class ApplicationConfig {
 
   private final MessageUtil msg;
@@ -85,17 +89,17 @@ public class ApplicationConfig {
             User.builder()
                 .username("USER_A")
                 .password(passwordEncoder.encode("USER_A"))
-                .authorities("ROLE_A")
+                .authorities("ADMIN")
                 .build(),
             User.builder()
                 .username("USER_B")
                 .password(passwordEncoder.encode("USER_B"))
-                .authorities("ROLE_B")
+                .authorities("USER")
                 .build()))
         .httpBasic(Customizer.withDefaults())
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         // Authentication
-        .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()))
+        .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(authenticationConverter())))
         // Miscellaneous
         .csrf(AbstractHttpConfigurer::disable);
 
@@ -138,6 +142,16 @@ public class ApplicationConfig {
             jwt -> OAuth2TokenValidatorResult.success()));
 
     return jwtDecoder;
+  }
+
+  protected JwtAuthenticationConverter authenticationConverter() {
+    JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();
+    authoritiesConverter.setAuthorityPrefix("");
+    authoritiesConverter.setAuthoritiesClaimName("roles");
+
+    JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+    converter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);
+    return converter;
   }
 
 }

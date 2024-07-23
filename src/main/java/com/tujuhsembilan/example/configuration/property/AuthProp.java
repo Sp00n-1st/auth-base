@@ -23,4 +23,7 @@ public class AuthProp {
   private String systemUsername;
   private String systemPassword;
 
+  private Long expiration;
+  private Long refreshExpiration;
+
 }

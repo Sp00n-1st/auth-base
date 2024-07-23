@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -141,6 +142,12 @@ public class ResponseEntityExceptionConfig extends ResponseEntityExceptionHandle
       param.setStatus(HttpStatus.METHOD_NOT_ALLOWED);
 
       error = getJsonApiError(param, "method-not-allowed");
+    }
+
+    else if (x instanceof AccessDeniedException) {
+      param.setStatus(HttpStatus.FORBIDDEN);
+
+      error = getJsonApiError(param, "access-denied");
     }
 
     else if (enableSystemError) {
